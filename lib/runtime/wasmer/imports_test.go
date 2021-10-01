@@ -242,12 +242,11 @@ func Test_ext_storage_get_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_storage_get_version_1", enc)
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	value, err := new(optional.Bytes).Decode(buf)
+	var value *[]byte
+	err = scale.Unmarshal(ret, &value)
 	require.NoError(t, err)
-	require.Equal(t, testvalue, value.Value())
+	require.NotNil(t, value)
+	require.Equal(t, testvalue, *value)
 }
 
 func Test_ext_storage_exists_version_1(t *testing.T) {
@@ -288,12 +287,11 @@ func Test_ext_storage_next_key_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_storage_next_key_version_1", enc)
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	next, err := new(optional.Bytes).Decode(buf)
+	var next *[]byte
+	err = scale.Unmarshal(ret, &next)
 	require.NoError(t, err)
-	require.Equal(t, nextkey, next.Value())
+	require.NotNil(t, next)
+	require.Equal(t, nextkey, *next)
 }
 
 func Test_ext_storage_read_version_1(t *testing.T) {
@@ -316,12 +314,11 @@ func Test_ext_storage_read_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_storage_read_version_1", append(append(encKey, encOffset...), encBufferSize...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-	val := read.Value()
+	require.NotNil(t, read)
+	val := *read
 	require.Equal(t, testvalue[testoffset:], val[:len(testvalue)-int(testoffset)])
 }
 
@@ -345,12 +342,11 @@ func Test_ext_storage_read_version_1_again(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_storage_read_version_1", append(append(encKey, encOffset...), encBufferSize...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-	val := read.Value()
+	require.NotNil(t, read)
+	val := *read
 	require.Equal(t, len(testvalue)-int(testoffset), len(val)) // TODO: fix
 	require.Equal(t, testvalue[testoffset:], val[:len(testvalue)-int(testoffset)])
 }
@@ -375,12 +371,11 @@ func Test_ext_storage_read_version_1_OffsetLargerThanValue(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_storage_read_version_1", append(append(encKey, encOffset...), encBufferSize...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-	val := read.Value()
+	require.NotNil(t, read)
+	val := *read
 	require.Equal(t, []byte{}, val)
 }
 
@@ -447,8 +442,10 @@ func Test_ext_crypto_ed25519_generate_version_1(t *testing.T) {
 	mnemonic, err := crypto.NewBIP39Mnemonic()
 	require.NoError(t, err)
 
-	data := optional.NewBytes(true, []byte(mnemonic))
-	seedData, err := data.Encode()
+	mnemonicBytes := []byte(mnemonic)
+	var data *[]byte
+	data = &mnemonicBytes
+	seedData, err := scale.Marshal(data)
 	require.NoError(t, err)
 
 	params := append(idData, seedData...)
@@ -575,13 +572,10 @@ func Test_ext_crypto_ed25519_verify_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_crypto_ed25519_verify_version_1", append(append(encSign, encMsg...), encPubKey...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-
-	require.True(t, read.Exists())
+	require.NotNil(t, read)
 }
 
 func Test_ext_crypto_sr25519_generate_version_1(t *testing.T) {
@@ -594,8 +588,10 @@ func Test_ext_crypto_sr25519_generate_version_1(t *testing.T) {
 	mnemonic, err := crypto.NewBIP39Mnemonic()
 	require.NoError(t, err)
 
-	data := optional.NewBytes(true, []byte(mnemonic))
-	seedData, err := data.Encode()
+	mnemonicBytes := []byte(mnemonic)
+	var data *[]byte
+	data = &mnemonicBytes
+	seedData, err := scale.Marshal(data)
 	require.NoError(t, err)
 
 	params := append(idData, seedData...)
@@ -800,13 +796,10 @@ func Test_ext_crypto_sr25519_verify_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_crypto_sr25519_verify_version_1", append(append(encSign, encMsg...), encPubKey...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-
-	require.True(t, read.Exists())
+	require.NotNil(t, read)
 }
 
 func Test_ext_default_child_storage_read_version_1(t *testing.T) {
@@ -836,13 +829,12 @@ func Test_ext_default_child_storage_read_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_default_child_storage_read_version_1", append(append(encChildKey, encKey...), append(encOffset, encBufferSize...)...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
+	require.NotNil(t, read)
 
-	val := read.Value()
+	val := *read
 	require.Equal(t, testValue[testOffset:], val[:len(testValue)-int(testOffset)])
 }
 
@@ -933,12 +925,10 @@ func Test_ext_default_child_storage_exists_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_default_child_storage_exists_version_1", append(encChildKey, encKey...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-	require.True(t, read.Exists())
+	require.NotNil(t, read)
 }
 
 func Test_ext_default_child_storage_get_version_1(t *testing.T) {
@@ -959,12 +949,10 @@ func Test_ext_default_child_storage_get_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_default_child_storage_get_version_1", append(encChildKey, encKey...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-	require.Equal(t, testValue, read.Value())
+	require.NotNil(t, read)
 }
 
 func Test_ext_default_child_storage_next_key_version_1(t *testing.T) {
@@ -997,12 +985,11 @@ func Test_ext_default_child_storage_next_key_version_1(t *testing.T) {
 	ret, err := inst.Exec("rtm_ext_default_child_storage_next_key_version_1", append(encChildKey, encKey...))
 	require.NoError(t, err)
 
-	buf := &bytes.Buffer{}
-	buf.Write(ret)
-
-	read, err := new(optional.Bytes).Decode(buf)
+	var read *[]byte
+	err = scale.Unmarshal(ret, &read)
 	require.NoError(t, err)
-	require.Equal(t, testKeyValuePair[1].key, read.Value())
+	require.NotNil(t, read)
+	require.Equal(t, testKeyValuePair[1].key, *read)
 }
 
 func Test_ext_default_child_storage_root_version_1(t *testing.T) {
